@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Pembukuan Kasir - Versi 2</title>
+    <title>Laporan Pembukuan Kasir</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -11,15 +11,19 @@
     <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Ringkasan Pembukuan</h1>
-            <button onclick="ambilData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition">
+            <button onclick="ambilData()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
                 Refresh Data
             </button>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div class="bg-gradient-to-r from-blue-600 to-blue-400 text-white p-6 rounded-2xl shadow-lg">
-                <p class="text-sm opacity-90 uppercase tracking-wider font-semibold">Total Omset Keseluruhan</p>
+                <p class="text-sm opacity-90 uppercase tracking-wider font-semibold">Total Omset</p>
                 <h2 id="totalOmset" class="text-4xl font-bold mt-2">Rp 0</h2>
+            </div>
+            <div class="bg-gradient-to-r from-green-600 to-green-400 text-white p-6 rounded-2xl shadow-lg">
+                <p class="text-sm opacity-90 uppercase tracking-wider font-semibold">Total Untung</p>
+                <h2 id="totalUntung" class="text-3xl font-bold mt-2">Rp 0</h2>
             </div>
         </div>
 
@@ -27,14 +31,14 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b bg-gray-50 text-gray-600 uppercase text-xs">
-                        <th class="p-4 font-bold">Tanggal & Waktu</th>
-                        <th class="p-4 font-bold">Total Harga</th>
+                        <th class="p-4 font-bold">Tanggal</th>
+                        <th class="p-4 font-bold">Item</th>
+                        <th class="p-4 font-bold">Omset</th>
+                        <th class="p-4 font-bold">Bonus</th>
                     </tr>
                 </thead>
                 <tbody id="tabelData" class="text-gray-700">
-                    <tr>
-                        <td colspan="2" class="p-10 text-center text-gray-400">Sedang memuat data dari Supabase...</td>
-                    </tr>
+                    <tr><td colspan="4" class="p-10 text-center">Memuat data...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -43,16 +47,14 @@
     <script>
         const SUPABASE_URL = 'https://tosaqkqmbdlumdtrbsqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvc2Fxa3FtYmRsdW1kdHJic3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NTE0MjQsImV4cCI6MjA4MDUyNzQyNH0.pOYGd7-o1tQgbHRNmX8EA2bWo4Pp-Em7UOiurjo6OwI';
-        
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function ambilData() {
             const tabel = document.getElementById('tabelData');
-            
             try {
-                // Memanggil tabel 'sales'
+                // MEMANGGIL TABEL 'transactions'
                 const { data, error } = await sbClient
-                    .from('sales')
+                    .from('transactions')
                     .select('*')
                     .order('created_at', { ascending: false });
 
@@ -60,38 +62,41 @@
 
                 if (data && data.length > 0) {
                     let html = '';
-                    let totalKeseluruhan = 0;
+                    let sumOmset = 0;
+                    let sumUntung = 0;
 
                     data.forEach(item => {
-                        // MENGGUNAKAN KOLOM 'total' SESUAI DATABASE ANDA
-                        const harga = item.total || 0; 
-                        totalKeseluruhan += harga;
+                        // MENGGUNAKAN NAMA KOLOM SESUAI DATABASE ANDA
+                        const omset = item.total_omset || 0;
+                        const untung = item.total_untung || 0;
+                        const bonus = item.total_bonus || 0;
+                        const namaItem = item.items || 'Produk';
                         
-                        const tanggal = new Date(item.created_at).toLocaleString('id-ID', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short'
-                        });
+                        sumOmset += omset;
+                        sumUntung += untung;
+                        
+                        const tanggal = new Date(item.created_at).toLocaleDateString('id-ID');
 
                         html += `
-                            <tr class="border-b hover:bg-gray-50 transition">
+                            <tr class="border-b hover:bg-gray-50">
                                 <td class="p-4 text-sm">${tanggal}</td>
-                                <td class="p-4 text-sm font-bold text-green-600">Rp ${harga.toLocaleString('id-ID')}</td>
+                                <td class="p-4 text-sm">${namaItem}</td>
+                                <td class="p-4 text-sm font-bold text-blue-600">Rp ${omset.toLocaleString()}</td>
+                                <td class="p-4 text-sm text-orange-500">Rp ${bonus.toLocaleString()}</td>
                             </tr>
                         `;
                     });
 
                     tabel.innerHTML = html;
-                    document.getElementById('totalOmset').innerText = 'Rp ' + totalKeseluruhan.toLocaleString('id-ID');
+                    document.getElementById('totalOmset').innerText = 'Rp ' + sumOmset.toLocaleString();
+                    document.getElementById('totalUntung').innerText = 'Rp ' + sumUntung.toLocaleString();
                 } else {
-                    tabel.innerHTML = '<tr><td colspan="2" class="p-10 text-center text-gray-500">Belum ada transaksi di tabel sales.</td></tr>';
+                    tabel.innerHTML = '<tr><td colspan="4" class="p-10 text-center">Belum ada data di tabel transactions.</td></tr>';
                 }
-
             } catch (err) {
-                console.error('Error:', err);
-                tabel.innerHTML = `<tr><td colspan="2" class="p-10 text-center text-red-500 font-semibold">Gagal memuat data! <br> <span class="text-xs font-normal">${err.message}</span></td></tr>`;
+                tabel.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500">Error: ${err.message}</td></tr>`;
             }
         }
-
         ambilData();
     </script>
 </body>
