@@ -28,13 +28,12 @@
                 <thead>
                     <tr class="border-b bg-gray-50 text-gray-600 uppercase text-xs">
                         <th class="p-4 font-bold">Tanggal & Waktu</th>
-                        <th class="p-4 font-bold">Jumlah Item</th>
                         <th class="p-4 font-bold">Total Harga</th>
                     </tr>
                 </thead>
                 <tbody id="tabelData" class="text-gray-700">
                     <tr>
-                        <td colspan="3" class="p-10 text-center text-gray-400">Sedang memuat data dari Supabase...</td>
+                        <td colspan="2" class="p-10 text-center text-gray-400">Sedang memuat data dari Supabase...</td>
                     </tr>
                 </tbody>
             </table>
@@ -42,18 +41,16 @@
     </div>
 
     <script>
-        // KONFIGURASI SUPABASE (Sudah Diperbaiki)
         const SUPABASE_URL = 'https://tosaqkqmbdlumdtrbsqc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvc2Fxa3FtYmRsdW1kdHJic3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5NTE0MjQsImV4cCI6MjA4MDUyNzQyNH0.pOYGd7-o1tQgbHRNmX8EA2bWo4Pp-Em7UOiurjo6OwI';
         
-        // Inisialisasi Client
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function ambilData() {
             const tabel = document.getElementById('tabelData');
             
             try {
-                // Mengambil data dari tabel 'transactions'
+                // Memanggil tabel 'sales'
                 const { data, error } = await sbClient
                     .from('sales')
                     .select('*')
@@ -66,10 +63,10 @@
                     let totalKeseluruhan = 0;
 
                     data.forEach(item => {
-                        const harga = item.total_price || 0;
+                        // MENGGUNAKAN KOLOM 'total' SESUAI DATABASE ANDA
+                        const harga = item.total || 0; 
                         totalKeseluruhan += harga;
                         
-                        // Format Tanggal Indonesia
                         const tanggal = new Date(item.created_at).toLocaleString('id-ID', {
                             dateStyle: 'medium',
                             timeStyle: 'short'
@@ -78,7 +75,6 @@
                         html += `
                             <tr class="border-b hover:bg-gray-50 transition">
                                 <td class="p-4 text-sm">${tanggal}</td>
-                                <td class="p-4 text-sm">${item.quantity || 1} Pcs</td>
                                 <td class="p-4 text-sm font-bold text-green-600">Rp ${harga.toLocaleString('id-ID')}</td>
                             </tr>
                         `;
@@ -87,10 +83,16 @@
                     tabel.innerHTML = html;
                     document.getElementById('totalOmset').innerText = 'Rp ' + totalKeseluruhan.toLocaleString('id-ID');
                 } else {
-                    tabel.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-500">Belum ada transaksi yang tercatat.</td></tr>';
+                    tabel.innerHTML = '<tr><td colspan="2" class="p-10 text-center text-gray-500">Belum ada transaksi di tabel sales.</td></tr>';
                 }
 
             } catch (err) {
-                console.error('Error fetching data:', err);
-                tabel.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-red-500 font-semibold">Gagal memuat data! <br> <span class="text-xs font-normal">${err.message}</span></td></tr>`;
+                console.error('Error:', err);
+                tabel.innerHTML = `<tr><td colspan="2" class="p-10 text-center text-red-500 font-semibold">Gagal memuat data! <br> <span class="text-xs font-normal">${err.message}</span></td></tr>`;
             }
+        }
+
+        ambilData();
+    </script>
+</body>
+</html>
