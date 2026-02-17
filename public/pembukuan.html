@@ -55,7 +55,7 @@
             try {
                 // Mengambil data dari tabel 'transactions'
                 const { data, error } = await sbClient
-                    .from('transactions')
+                    .from('sales')
                     .select('*')
                     .order('created_at', { ascending: false });
 
